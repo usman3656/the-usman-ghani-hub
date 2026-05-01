@@ -6,4 +6,11 @@
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default defineConfig();
+const repositoryName = process.env.GITHUB_REPOSITORY?.split("/")[1];
+
+export default defineConfig({
+  vite: {
+    // GitHub Pages serves this app under /<repo-name>/, not domain root.
+    base: repositoryName ? `/${repositoryName}/` : "/",
+  },
+});
