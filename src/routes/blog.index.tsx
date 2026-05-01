@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { SiteLayout } from "@/content/../components/site-layout";
+import { SiteLayout } from "@/components/site-layout";
 import { formatDate, getPostMetas } from "@/content/posts";
 
 export const Route = createFileRoute("/blog/")({
