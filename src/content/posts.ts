@@ -1,10 +1,4 @@
 import matter from "gray-matter";
-import { Buffer } from "buffer";
-
-// gray-matter expects Buffer in browser environments
-if (typeof (globalThis as { Buffer?: unknown }).Buffer === "undefined") {
-  (globalThis as { Buffer?: unknown }).Buffer = Buffer;
-}
 
 const rawPosts = import.meta.glob("/src/content/posts/*.md", {
   query: "?raw",
