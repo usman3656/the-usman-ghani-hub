@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { SITE } from "@/content/data";
 
-const NAV = [
+const NAV: Array<{ to: "/" | "/blog" | "/books" | "/videos" | "/cv"; label: string; exact?: boolean }> = [
   { to: "/", label: "Home", exact: true },
   { to: "/blog", label: "Blog" },
   { to: "/books", label: "Books" },
   { to: "/videos", label: "Videos" },
   { to: "/cv", label: "CV" },
-] as const;
+];
 
 export function SiteHeader() {
   return (
