@@ -20,6 +20,8 @@ export default defineConfig({
           enabled: true,
           crawlLinks: true,
           autoStaticPathsDiscovery: true,
+          // Do not prerender static files (pdf, images, etc.), only route pages.
+          filter: ({ path }: { path: string }) => !/\.[a-z0-9]+$/i.test(path),
         },
       }
     : undefined,
