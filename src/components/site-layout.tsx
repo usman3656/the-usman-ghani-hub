@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SITE } from "@/content/data";
 
 const NAV: Array<{ to: "/" | "/blog" | "/books" | "/videos" | "/cv"; label: string; exact?: boolean }> = [
@@ -10,15 +11,34 @@ const NAV: Array<{ to: "/" | "/blog" | "/books" | "/videos" | "/cv"; label: stri
 ];
 
 export function SiteHeader() {
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 24) {
+        setIsVisible(true);
+      } else if (y < lastY) {
+        setIsVisible(true);
+      } else if (y > lastY) {
+        setIsVisible(false);
+      }
+      lastY = y;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <header className="border-b border-border bg-background no-print">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-6 py-5">
-        <Link
-          to="/"
-          className="font-serif text-lg font-semibold tracking-tight text-foreground hover:text-primary transition-colors"
-        >
-          {SITE.shortName}
-        </Link>
+    <header
+      className={`fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm no-print transition-transform duration-300 ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      }`}
+    >
+      <div className="mx-auto flex max-w-5xl items-center justify-end gap-6 px-6 py-5">
         <nav className="flex items-center gap-1 sm:gap-2 text-sm">
           {NAV.map((item) => (
             <Link
@@ -78,7 +98,7 @@ export function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pt-[77px]">{children}</main>
       <SiteFooter />
     </div>
   );

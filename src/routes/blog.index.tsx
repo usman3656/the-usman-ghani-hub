@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { SiteLayout } from "@/components/site-layout";
 import { formatDate, getPostMetas } from "@/content/posts";
 
@@ -22,7 +23,21 @@ export const Route = createFileRoute("/blog/")({
 });
 
 function BlogIndex() {
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
   const posts = getPostMetas();
+  const categories = useMemo(
+    () => Array.from(new Set(posts.flatMap((p) => p.tags.map((t) => t.toLowerCase())))),
+    [posts],
+  );
+  const filtered = posts.filter((p) => {
+    const q = search.trim().toLowerCase();
+    const haystack = `${p.title} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
+    const matchesSearch = !q || haystack.includes(q);
+    const matchesCategory = category === "all" || p.tags.map((t) => t.toLowerCase()).includes(category);
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <SiteLayout>
       <section className="mx-auto max-w-3xl px-6 pt-16 pb-10">
@@ -39,8 +54,44 @@ function BlogIndex() {
       </div>
 
       <section className="mx-auto max-w-3xl px-6 py-12">
+        <div className="mb-8 space-y-3">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search blog posts..."
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:border-primary"
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setCategory("all")}
+              className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
+                category === "all"
+                  ? "border-primary text-primary"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              All
+            </button>
+            {categories.map((item) => (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setCategory(item)}
+                className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
+                  category === item
+                    ? "border-primary text-primary"
+                    : "border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
         <ul className="space-y-12">
-          {posts.map((p) => (
+          {filtered.map((p) => (
             <li key={p.slug}>
               <Link to="/blog/$slug" params={{ slug: p.slug }} className="group block">
                 <p className="text-sm text-muted-foreground">
@@ -61,6 +112,9 @@ function BlogIndex() {
             </li>
           ))}
         </ul>
+        {filtered.length === 0 && (
+          <p className="mt-10 text-sm text-muted-foreground">No blog posts match your search/filter yet.</p>
+        )}
       </section>
     </SiteLayout>
   );

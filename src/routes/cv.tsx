@@ -56,6 +56,8 @@ function Entry({
 }
 
 function CVPage() {
+  const cvHref = `${import.meta.env.BASE_URL}Resume_Usman.pdf`;
+
   return (
     <SiteLayout>
       <article className="mx-auto max-w-3xl px-6 pt-16 pb-20">
@@ -82,7 +84,7 @@ function CVPage() {
             </p>
           </div>
           <a
-            href="/Resume_Usman.pdf"
+            href={cvHref}
             download
             className="no-print inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
           >
