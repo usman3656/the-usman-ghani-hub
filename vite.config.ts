@@ -6,7 +6,6 @@
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-const repositoryName = process.env.GITHUB_REPOSITORY?.split("/")[1];
 /** GitHub Actions sets this for static Pages builds (no Cloudflare Workers runtime). */
 const isGitHubPages = process.env.GITHUB_PAGES === "true";
 
@@ -26,8 +25,7 @@ export default defineConfig({
       }
     : undefined,
   vite: {
-    // GitHub Pages serves this app under /<repo-name>/, not domain root.
-    // Custom domains/non-Pages deployments must stay at "/" or assets 404.
-    base: isGitHubPages && repositoryName ? `/${repositoryName}/` : "/",
+    // Custom domain is served from root, so keep asset paths absolute from "/".
+    base: "/",
   },
 });
