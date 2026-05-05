@@ -35,7 +35,7 @@ export function SiteHeader() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm no-print transition-transform duration-300 ${
-        isVisible ? "translate-y-0" : "-translate-y-full"
+        isVisible ? "translate-y-0 pointer-events-auto" : "-translate-y-full pointer-events-none"
       }`}
     >
       <div className="mx-auto flex max-w-5xl items-center justify-end gap-6 px-6 py-5">
