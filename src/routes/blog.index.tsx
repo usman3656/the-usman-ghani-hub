@@ -31,10 +31,16 @@ function BlogIndex() {
       .trim()
       .toLowerCase()
       .replace(/[\s_]+/g, "-");
-  const categories = useMemo(
-    () => Array.from(new Set(posts.flatMap((p) => p.tags.map((t) => normalizeCategory(t))))),
-    [posts],
-  );
+  const categories = useMemo(() => {
+    const byValue = new Map<string, string>();
+    for (const tag of posts.flatMap((p) => p.tags)) {
+      const value = normalizeCategory(tag);
+      if (!byValue.has(value)) {
+        byValue.set(value, tag);
+      }
+    }
+    return Array.from(byValue.entries()).map(([value, label]) => ({ value, label }));
+  }, [posts]);
   const filtered = posts.filter((p) => {
     const q = search.trim().toLowerCase();
     const haystack = `${p.title} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
@@ -71,27 +77,33 @@ function BlogIndex() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setCategory("all")}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                setCategory("all");
+              }}
               className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
                 category === "all"
                   ? "border-primary text-primary"
                   : "border-border text-muted-foreground hover:text-foreground"
-              }`}
+              } relative z-20 cursor-pointer pointer-events-auto`}
             >
               All
             </button>
             {categories.map((item) => (
               <button
-                key={item}
+                key={item.value}
                 type="button"
-                onClick={() => setCategory(item)}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  setCategory(item.value);
+                }}
                 className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
-                  category === item
+                  category === item.value
                     ? "border-primary text-primary"
                     : "border-border text-muted-foreground hover:text-foreground"
-                }`}
+                } relative z-20 cursor-pointer pointer-events-auto`}
               >
-                {item}
+                {item.label}
               </button>
             ))}
           </div>
