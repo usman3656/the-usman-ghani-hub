@@ -22,15 +22,14 @@ export const Route = createFileRoute("/blog/")({
   component: BlogIndex,
 });
 
+function normalizeCategory(value: string) {
+  return value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+}
+
 function BlogIndex() {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
   const posts = getPostMetas();
-  const normalizeCategory = (value: string) =>
-    value
-      .trim()
-      .toLowerCase()
-      .replace(/[\s_]+/g, "-");
+
   const categories = useMemo(() => {
     const byValue = new Map<string, string>();
     for (const tag of posts.flatMap((p) => p.tags)) {
@@ -41,14 +40,36 @@ function BlogIndex() {
     }
     return Array.from(byValue.entries()).map(([value, label]) => ({ value, label }));
   }, [posts]);
-  const filtered = posts.filter((p) => {
+
+  /** Plain CSS visibility rules — works without relying on React click handlers (hydration / overlays). */
+  const categoryFilterCss = useMemo(() => {
+    const pillActive = (radioId: string, labelFor: string) =>
+      `body:has(#${radioId}:checked) label.blog-cat-pill[for="${labelFor}"] { border-color: var(--primary) !important; color: var(--primary) !important; }`;
+
+    const rules: string[] = [
+      `#blog-cat-all:checked ~ ul.blog-post-list > li { display: block !important; }`,
+      pillActive("blog-cat-all", "blog-cat-all"),
+    ];
+    for (const { value } of categories) {
+      const id = `blog-cat-${value}`;
+      rules.push(`#${id}:checked ~ ul.blog-post-list > li { display: none !important; }`);
+      rules.push(`#${id}:checked ~ ul.blog-post-list > li[data-tags~="${value}"] { display: block !important; }`);
+      rules.push(pillActive(id, id));
+    }
+    return rules.join("\n");
+  }, [categories]);
+
+  const postsMatchingSearch = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const haystack = `${p.title} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
-    const matchesSearch = !q || haystack.includes(q);
-    const matchesCategory =
-      category === "all" || p.tags.map((t) => normalizeCategory(t)).includes(category);
-    return matchesSearch && matchesCategory;
-  });
+    if (!q) return posts;
+    return posts.filter((p) => {
+      const haystack = `${p.title} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [posts, search]);
+
+  const pillBase =
+    "rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors cursor-pointer touch-manipulation select-none relative z-[101]";
 
   return (
     <SiteLayout>
@@ -66,81 +87,87 @@ function BlogIndex() {
       </div>
 
       <section className="mx-auto max-w-3xl px-6 py-12">
-        <div className="relative z-10 mb-8 space-y-3 pointer-events-auto">
+        <div className="relative isolate z-[100] mb-8 space-y-3">
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search blog posts..."
-            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:border-primary"
+            className="relative z-[101] w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:border-primary"
           />
-          <fieldset className="flex flex-wrap gap-2 border-0 p-0 m-0">
-            <legend className="sr-only">Filter posts by category</legend>
 
-            <label
-              className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors relative z-20 cursor-pointer pointer-events-auto ${
-                category === "all"
-                  ? "border-primary text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground"
-              }`}
-            >
+          {/* Category radios + CSS filtering (no React state needed for categories) */}
+          <div className="relative isolate z-[100] space-y-3">
+            <style dangerouslySetInnerHTML={{ __html: categoryFilterCss }} />
+
+            <input
+              type="radio"
+              name="blog-category-filter"
+              id="blog-cat-all"
+              defaultChecked
+              className="sr-only"
+            />
+            {categories.map((item) => (
               <input
+                key={item.value}
                 type="radio"
-                name="blog-category"
-                value="all"
-                checked={category === "all"}
-                onChange={(e) => setCategory(e.target.value)}
+                name="blog-category-filter"
+                id={`blog-cat-${item.value}`}
                 className="sr-only"
               />
-              All
-            </label>
-
-            {categories.map((item) => (
-              <label
-                key={item.value}
-                className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors relative z-20 cursor-pointer pointer-events-auto ${
-                  category === item.value
-                    ? "border-primary text-primary"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="blog-category"
-                  value={item.value}
-                  checked={category === item.value}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="sr-only"
-                />
-                {item.label}
-              </label>
             ))}
-          </fieldset>
+
+            <div className="flex flex-wrap gap-2" aria-label="Filter by category">
+              <label
+                htmlFor="blog-cat-all"
+                className={`blog-cat-pill ${pillBase} border-border text-muted-foreground hover:text-foreground`}
+              >
+                All
+              </label>
+              {categories.map((item) => (
+                <label
+                  key={item.value}
+                  htmlFor={`blog-cat-${item.value}`}
+                  className={`blog-cat-pill ${pillBase} border-border text-muted-foreground hover:text-foreground`}
+                >
+                  {item.label}
+                </label>
+              ))}
+            </div>
+
+            <ul className="blog-post-list space-y-12">
+              {postsMatchingSearch.map((p) => (
+                <li
+                  key={p.slug}
+                  data-tags={p.tags.map((t) => normalizeCategory(t)).join(" ")}
+                  className="blog-post-item block"
+                >
+                  <Link to="/blog/$slug" params={{ slug: p.slug }} className="group block">
+                    <p className="text-sm text-muted-foreground">
+                      {formatDate(p.date)} · {p.readingTime} min read
+                    </p>
+                    <h2 className="mt-2 font-serif text-3xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                      {p.title}
+                    </h2>
+                    <p className="mt-3 font-serif text-lg leading-relaxed text-muted-foreground">
+                      {p.excerpt}
+                    </p>
+                    {p.tags.length > 0 && (
+                      <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">
+                        {p.tags.join(" · ")}
+                      </p>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-        <ul className="space-y-12">
-          {filtered.map((p) => (
-            <li key={p.slug}>
-              <Link to="/blog/$slug" params={{ slug: p.slug }} className="group block">
-                <p className="text-sm text-muted-foreground">
-                  {formatDate(p.date)} · {p.readingTime} min read
-                </p>
-                <h2 className="mt-2 font-serif text-3xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-                  {p.title}
-                </h2>
-                <p className="mt-3 font-serif text-lg leading-relaxed text-muted-foreground">
-                  {p.excerpt}
-                </p>
-                {p.tags.length > 0 && (
-                  <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground">
-                    {p.tags.join(" · ")}
-                  </p>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        {filtered.length === 0 && (
-          <p className="mt-10 text-sm text-muted-foreground">No blog posts match your search/filter yet.</p>
+
+        {postsMatchingSearch.length === 0 && (
+          <p className="mt-10 text-sm text-muted-foreground">
+            No blog posts match your search/filter yet.
+          </p>
         )}
       </section>
     </SiteLayout>
