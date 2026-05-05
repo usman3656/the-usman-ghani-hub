@@ -26,15 +26,21 @@ function BlogIndex() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const posts = getPostMetas();
+  const normalizeCategory = (value: string) =>
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_]+/g, "-");
   const categories = useMemo(
-    () => Array.from(new Set(posts.flatMap((p) => p.tags.map((t) => t.toLowerCase())))),
+    () => Array.from(new Set(posts.flatMap((p) => p.tags.map((t) => normalizeCategory(t))))),
     [posts],
   );
   const filtered = posts.filter((p) => {
     const q = search.trim().toLowerCase();
     const haystack = `${p.title} ${p.excerpt} ${p.tags.join(" ")}`.toLowerCase();
     const matchesSearch = !q || haystack.includes(q);
-    const matchesCategory = category === "all" || p.tags.map((t) => t.toLowerCase()).includes(category);
+    const matchesCategory =
+      category === "all" || p.tags.map((t) => normalizeCategory(t)).includes(category);
     return matchesSearch && matchesCategory;
   });
 
@@ -54,7 +60,7 @@ function BlogIndex() {
       </div>
 
       <section className="mx-auto max-w-3xl px-6 py-12">
-        <div className="mb-8 space-y-3">
+        <div className="relative z-10 mb-8 space-y-3 pointer-events-auto">
           <input
             type="search"
             value={search}
