@@ -27,6 +27,7 @@ export default defineConfig({
     : undefined,
   vite: {
     // GitHub Pages serves this app under /<repo-name>/, not domain root.
-    base: repositoryName ? `/${repositoryName}/` : "/",
+    // Custom domains/non-Pages deployments must stay at "/" or assets 404.
+    base: isGitHubPages && repositoryName ? `/${repositoryName}/` : "/",
   },
 });
