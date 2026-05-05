@@ -74,39 +74,48 @@ function BlogIndex() {
             placeholder="Search blog posts..."
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none ring-0 placeholder:text-muted-foreground focus:border-primary"
           />
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onPointerDown={(e) => {
-                e.preventDefault();
-                setCategory("all");
-              }}
-              className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
+          <fieldset className="flex flex-wrap gap-2 border-0 p-0 m-0">
+            <legend className="sr-only">Filter posts by category</legend>
+
+            <label
+              className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors relative z-20 cursor-pointer pointer-events-auto ${
                 category === "all"
                   ? "border-primary text-primary"
                   : "border-border text-muted-foreground hover:text-foreground"
-              } relative z-20 cursor-pointer pointer-events-auto`}
+              }`}
             >
+              <input
+                type="radio"
+                name="blog-category"
+                value="all"
+                checked={category === "all"}
+                onChange={(e) => setCategory(e.target.value)}
+                className="sr-only"
+              />
               All
-            </button>
+            </label>
+
             {categories.map((item) => (
-              <button
+              <label
                 key={item.value}
-                type="button"
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  setCategory(item.value);
-                }}
-                className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors ${
+                className={`rounded-md border px-3 py-1 text-xs uppercase tracking-wide transition-colors relative z-20 cursor-pointer pointer-events-auto ${
                   category === item.value
                     ? "border-primary text-primary"
                     : "border-border text-muted-foreground hover:text-foreground"
-                } relative z-20 cursor-pointer pointer-events-auto`}
+                }`}
               >
+                <input
+                  type="radio"
+                  name="blog-category"
+                  value={item.value}
+                  checked={category === item.value}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="sr-only"
+                />
                 {item.label}
-              </button>
+              </label>
             ))}
-          </div>
+          </fieldset>
         </div>
         <ul className="space-y-12">
           {filtered.map((p) => (
